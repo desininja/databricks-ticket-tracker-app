@@ -10,8 +10,13 @@ STATUS_BADGE = {"open": "🟡 Open", "in_progress": "🔵 In Progress", "resolve
 PRIORITY_BADGE = {"low": "⬇️ Low", "medium": "➡️ Medium", "high": "🔺 High"}
 
 
+@st.cache_resource(show_spinner=False)
 def get_connection():
-    """Connect to Lakebase using environment variables provided by app.yaml."""
+    """Connect to Lakebase using environment variables provided by app.yaml.
+
+    Cached with st.cache_resource so Streamlit reuses one connection across
+    reruns (every click/keystroke reruns this whole script) instead of
+    opening a brand-new connection each time and leaking the old one."""
     return psycopg2.connect(
         host=os.environ["LAKEBASE_HOST"],
         port=os.environ.get("LAKEBASE_PORT", "5432"),
@@ -43,6 +48,11 @@ def flash(kind, message):
 
 
 conn = get_connection()
+if conn.closed:
+    # The cached connection died (e.g. Lakebase closed it after idling) —
+    # drop it from the cache and open a fresh one instead of reusing a dead one.
+    get_connection.clear()
+    conn = get_connection()
 ensure_schema(conn)
 cur = conn.cursor()
 

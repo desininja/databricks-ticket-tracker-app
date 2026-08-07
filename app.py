@@ -10,8 +10,13 @@ STATUS_BADGE = {"open": "🟡 Open", "in_progress": "🔵 In Progress", "resolve
 PRIORITY_BADGE = {"low": "⬇️ Low", "medium": "➡️ Medium", "high": "🔺 High"}
 
 
+@st.cache_resource(show_spinner=False)
 def get_connection():
-    """Connect to Lakebase using environment variables provided by app.yaml."""
+    """Connect to Lakebase using environment variables provided by app.yaml.
+
+    Cached with st.cache_resource so Streamlit reuses one connection across
+    reruns (every click/keystroke reruns this whole script) instead of
+    opening a brand-new connection each time and leaking the old one."""
     return psycopg2.connect(
         host=os.environ["LAKEBASE_HOST"],
         port=os.environ.get("LAKEBASE_PORT", "5432"),
@@ -23,20 +28,19 @@ def get_connection():
 
 
 def ensure_schema(conn):
-    """Idempotent migration so existing deployments pick up the priority column."""
+    """Best-effort, idempotent migration so existing deployments pick up the
+    priority column. The app connects with a least-privilege role that may not
+    own the table (and therefore can't run ALTER TABLE) — if so, this is a
+    no-op and the column must be added once by the table owner instead
+    (see schema.sql)."""
     try:
         with conn.cursor() as migrate_cur:
             migrate_cur.execute(
                 "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'"
             )
         conn.commit()
-    except psycopg2.errors.InsufficientPrivilege:
-        # User doesn't have ALTER privileges - skip migration silently
+    except Exception:
         conn.rollback()
-    except Exception as e:
-        # Any other error - log it but don't crash the app
-        conn.rollback()
-        st.warning(f"Schema migration skipped: {e}")
 
 
 def flash(kind, message):
@@ -44,8 +48,12 @@ def flash(kind, message):
 
 
 conn = get_connection()
-# ensure_schema(conn)  # Disabled - requires table owner privileges
-cur = conn.cursor()
+if conn.closed:
+    # The cached connection died (e.g. Lakebase closed it after idling) —
+    # drop it from the cache and open a fresh one instead of reusing a dead one.
+    get_connection.clear()
+    conn = get_connection()
+ensure_schema(conn)
 cur = conn.cursor()
 
 if "confirm_delete_id" not in st.session_state:

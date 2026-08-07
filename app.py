@@ -1,17 +1,17 @@
 import streamlit as st
 import psycopg2
 import os
-from databricks.sdk import WorkspaceClient
-
 def get_connection():
-    w = WorkspaceClient()
-    # Generates a short-lived credential for the Lakebase/Postgres instance
-    cred = w.database.generate_database_credential(...)  # exact call name/args
+    """
+    Connect to Lakebase using environment variables provided by app.yaml resources.
+    The Lakebase resource binding automatically provides credentials via env vars.
+    """
     return psycopg2.connect(
         host=os.environ["LAKEBASE_HOST"],
+        port=os.environ.get("LAKEBASE_PORT", "5432"),
         dbname=os.environ["LAKEBASE_DB"],
         user=os.environ["LAKEBASE_USER"],
-        password=cred.token,
+        password=os.environ["LAKEBASE_PASSWORD"],
         sslmode="require",
     )
 

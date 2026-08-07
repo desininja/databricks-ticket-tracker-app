@@ -1,6 +1,13 @@
 command: ["streamlit", "run", "app.py"]
-env:
-  - name: "LAKEBASE_HOST"
-    valueFrom: "lakebase-host"
-  - name: "LAKEBASE_DB"
-    valueFrom: "lakebase-db"
+
+resources:
+  - name: lakebase-connection
+    lakebase:
+      lakebase_id: "br-withered-term-d8a7wq32"  # Branch UID from projects/ticket-tracker-app-db/branches/production
+      database: "databricks_postgres"             # Your database name
+    env_var_mapping:
+      LAKEBASE_HOST: "host"
+      LAKEBASE_PORT: "port"
+      LAKEBASE_DB: "database"
+      LAKEBASE_USER: "username"
+      LAKEBASE_PASSWORD: "password"

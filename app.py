@@ -23,12 +23,19 @@ def get_connection():
 
 
 def ensure_schema(conn):
-    """Idempotent migration so existing deployments pick up the priority column."""
-    with conn.cursor() as migrate_cur:
-        migrate_cur.execute(
-            "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'"
-        )
-    conn.commit()
+    """Best-effort, idempotent migration so existing deployments pick up the
+    priority column. The app connects with a least-privilege role that may not
+    own the table (and therefore can't run ALTER TABLE) — if so, this is a
+    no-op and the column must be added once by the table owner instead
+    (see schema.sql)."""
+    try:
+        with conn.cursor() as migrate_cur:
+            migrate_cur.execute(
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'"
+            )
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
 
 def flash(kind, message):

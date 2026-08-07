@@ -44,7 +44,7 @@ def flash(kind, message):
 
 
 conn = get_connection()
-ensure_schema(conn)
+# ensure_schema(conn)  # Disabled - requires table owner privileges
 cur = conn.cursor()
 cur = conn.cursor()
 

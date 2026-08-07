@@ -10,4 +10,7 @@ env:
   - name: "LAKEBASE_USER"
     value: "db_user_test"
   - name: "LAKEBASE_PASSWORD"
-    value: "npg_oWvJ0tw8hxEl"
+    valueFrom:
+      secretKeyRef:
+        scope: "ticket-tracker-secrets"
+        key: "lakebase-password"

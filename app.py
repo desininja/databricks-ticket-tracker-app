@@ -1,17 +1,17 @@
 import streamlit as st
 import psycopg2
 import os
-from databricks.sdk import WorkspaceClient
 
 def get_connection():
-    w = WorkspaceClient()
-    # Generates a short-lived credential for the Lakebase/Postgres instance
-    cred = w.database.generate_database_credential(...)  # exact call name/args
+    """
+    Connect to Lakebase using environment variables provided by app.yaml.
+    """
     return psycopg2.connect(
         host=os.environ["LAKEBASE_HOST"],
+        port=os.environ.get("LAKEBASE_PORT", "5432"),
         dbname=os.environ["LAKEBASE_DB"],
         user=os.environ["LAKEBASE_USER"],
-        password=cred.token,
+        password=os.environ["LAKEBASE_PASSWORD"],
         sslmode="require",
     )
 
@@ -21,7 +21,7 @@ conn = get_connection()
 cur = conn.cursor()
 
 # View all tickets
-cur.execute("SELECT ticket_id, title, status, created_by, created_at FROM tickets ORDER BY created_at DESC")
+cur.execute("SELECT ticket_id, title, status, created_by, craeted_at FROM tickets ORDER BY craeted_at DESC")
 tickets = cur.fetchall()
 
 for t in tickets:
@@ -29,7 +29,7 @@ for t in tickets:
 
 # Select a ticket to view messages
 ticket_id = st.selectbox("Select ticket", [t[0] for t in tickets])
-cur.execute("SELECT author, message_text, created_at FROM ticket_messages WHERE ticket_id=%s ORDER BY created_at", (ticket_id,))
+cur.execute("SELECT author, message_text, craeted_at FROM ticket_messages WHERE ticket_id=%s ORDER BY craeted_at", (ticket_id,))
 for m in cur.fetchall():
     st.write(f"**{m[0]}**: {m[1]} ({m[2]})")
 

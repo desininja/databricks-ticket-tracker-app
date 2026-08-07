@@ -21,7 +21,7 @@ conn = get_connection()
 cur = conn.cursor()
 
 # View all tickets
-cur.execute("SELECT ticket_id, title, status, created_by, craeted_at FROM tickets ORDER BY craeted_at DESC")
+cur.execute("SELECT ticket_id, title, status, created_by, created_at FROM tickets ORDER BY created_at DESC")
 tickets = cur.fetchall()
 
 for t in tickets:
@@ -29,7 +29,7 @@ for t in tickets:
 
 # Select a ticket to view messages
 ticket_id = st.selectbox("Select ticket", [t[0] for t in tickets])
-cur.execute("SELECT author, message_text, craeted_at FROM ticket_messages WHERE ticket_id=%s ORDER BY craeted_at", (ticket_id,))
+cur.execute("SELECT author, message_text, created_at FROM ticket_messages WHERE ticket_id=%s ORDER BY created_at", (ticket_id,))
 for m in cur.fetchall():
     st.write(f"**{m[0]}**: {m[1]} ({m[2]})")
 

@@ -2,13 +2,22 @@ command: ["streamlit", "run", "app.py"]
 
 env:
   - name: "LAKEBASE_HOST"
-    value: "ep-snowy-lake-d89m03dj.database.us-east-2.cloud.databricks.com"
+    valueFrom:
+      secretKeyRef:
+        scope: "ticket-tracker-secrets"
+        key: "lakebase-host"
   - name: "LAKEBASE_PORT"
     value: "5432"
   - name: "LAKEBASE_DB"
-    value: "databricks_postgres"
+    valueFrom:
+      secretKeyRef:
+        scope: "ticket-tracker-secrets"
+        key: "lakebase-db"
   - name: "LAKEBASE_USER"
-    value: "db_user_test"
+    valueFrom:
+      secretKeyRef:
+        scope: "ticket-tracker-secrets"
+        key: "lakebase-user"
   - name: "LAKEBASE_PASSWORD"
     valueFrom:
       secretKeyRef:

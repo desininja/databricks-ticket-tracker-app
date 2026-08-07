@@ -24,11 +24,19 @@ def get_connection():
 
 def ensure_schema(conn):
     """Idempotent migration so existing deployments pick up the priority column."""
-    with conn.cursor() as migrate_cur:
-        migrate_cur.execute(
-            "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'"
-        )
-    conn.commit()
+    try:
+        with conn.cursor() as migrate_cur:
+            migrate_cur.execute(
+                "ALTER TABLE tickets ADD COLUMN IF NOT EXISTS priority TEXT NOT NULL DEFAULT 'medium'"
+            )
+        conn.commit()
+    except psycopg2.errors.InsufficientPrivilege:
+        # User doesn't have ALTER privileges - skip migration silently
+        conn.rollback()
+    except Exception as e:
+        # Any other error - log it but don't crash the app
+        conn.rollback()
+        st.warning(f"Schema migration skipped: {e}")
 
 
 def flash(kind, message):
@@ -37,6 +45,7 @@ def flash(kind, message):
 
 conn = get_connection()
 ensure_schema(conn)
+cur = conn.cursor()
 cur = conn.cursor()
 
 if "confirm_delete_id" not in st.session_state:

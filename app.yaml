@@ -2,24 +2,12 @@ command: ["streamlit", "run", "app.py"]
 
 env:
   - name: "LAKEBASE_HOST"
-    valueFrom:
-      secretKeyRef:
-        scope: "ticket-tracker-secrets"
-        key: "lakebase-host"
+    valueFrom: lakebase_host_secret
   - name: "LAKEBASE_PORT"
     value: "5432"
   - name: "LAKEBASE_DB"
-    valueFrom:
-      secretKeyRef:
-        scope: "ticket-tracker-secrets"
-        key: "lakebase-db"
+    valueFrom: lakebase_db_secret
   - name: "LAKEBASE_USER"
-    valueFrom:
-      secretKeyRef:
-        scope: "ticket-tracker-secrets"
-        key: "lakebase-user"
+    valueFrom: lakebase_user_secret
   - name: "LAKEBASE_PASSWORD"
-    valueFrom:
-      secretKeyRef:
-        scope: "ticket-tracker-secrets"
-        key: "lakebase-password"
+    valueFrom: lakebase_password_secret
